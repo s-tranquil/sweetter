@@ -1,77 +1,57 @@
 import React, { Component } from 'react';
-import { Screen, NavigationBar, ListView, View, ImageBackground, Divider, Tile, Title, Subtitle } from '@shoutem/ui';
+import { Text } from "react-native";
+// import { Text, Screen, NavigationBar, ListView, View, ImageBackground, Divider, Tile, Title, Subtitle } from '@shoutem/ui';
+import request from "superagent";
+import { consumerKey, consumerSecretKey } from "./tokens";
+import { Base64 } from "js-base64";
 
-export default class App extends Component<{}> {
+export default class App extends Component {
     constructor(props) {
         super(props);
-        this.renderRow = this.renderRow.bind(this);
         this.state = {
-            restaurants: [
-                {
-                    "name": "Gaspar Brasserie",
-                    "address": "185 Sutter St, San Francisco, CA 94109",
-                    "image": { "url": "https://shoutem.github.io/static/getting-started/restaurant-1.jpg" },
-                },
-                {
-                    "name": "Chalk Point Kitchen",
-                    "address": "527 Broome St, New York, NY 10013",
-                    "image": { "url": "https://shoutem.github.io/static/getting-started/restaurant-2.jpg" },
-                },
-                {
-                    "name": "Kyoto Amber Upper East",
-                    "address": "225 Mulberry St, New York, NY 10012",
-                    "image": { "url": "https://shoutem.github.io/static/getting-started/restaurant-3.jpg" },
-                },
-                {
-                    "name": "Sushi Academy",
-                    "address": "1900 Warner Ave. Unit A Santa Ana, CA",
-                    "image": { "url": "https://shoutem.github.io/static/getting-started/restaurant-4.jpg" },
-                },
-                {
-                    "name": "Sushibo",
-                    "address": "35 Sipes Key, New York, NY 10012",
-                    "image": { "url": "https://shoutem.github.io/static/getting-started/restaurant-5.jpg" },
-                },
-                {
-                    "name": "Mastergrill",
-                    "address": "550 Upton Rue, San Francisco, CA 94109",
-                    "image": { "url": "https://shoutem.github.io/static/getting-started/restaurant-6.jpg" },
-                }
-            ],
-        }
+            data: "not fetched"
+        };
     }
 
-    renderRow(restaurant) {
-        return (
-            <View>
-                <ImageBackground
-                    styleName="large-banner"
-                    source={{ uri: restaurant.image.url }}
-                >
-                    <Tile>
-                        <Title styleName="md-gutter-bottom">{restaurant.name}</Title>
-                        <Subtitle styleName="sm-gutter-horizontal">{restaurant.address}</Subtitle>
-                    </Tile>
-                </ImageBackground>
-                <Divider styleName="line" />
-            </View>
-        );
+    componentDidMount() {
+        const credentials = `${encodeURIComponent(consumerKey)}:${encodeURIComponent(consumerSecretKey)}`;
+        const credentialsBase64 = Base64.btoa(credentials);
+
+
+        request
+            .post('https://api.twitter.com/oauth2/token')
+            .send({ grant_type: "client_credentials" }) // sends a JSON post body
+            .set("Authorization", `Basic ${credentialsBase64}`)
+            .set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+            .set("accept-encoding", "")
+            .end((err, res) => {
+                const accessToken = JSON.parse(res.text).access_token;
+                this.setState({data: accessToken});
+            });
     }
+
 
     render() {
-        const restaurants = this.state.restaurants;
+        return(
+            <React.Fragment>
+                <Text>{"\n\n"}</Text>
+                <Text>{this.state.data}</Text>
+            </React.Fragment>
+        )
+
+        // const restaurants = this.state.restaurants;
         
-        return (
-            <Screen>
-                <NavigationBar
-                    title="Tweets"
-                    styleName="inline"
-                />
-                <ListView
-                    data={restaurants}
-                    renderRow={this.renderRow}
-                />
-            </Screen>
-        );
+        // return (
+        //     <Screen>
+        //         <NavigationBar
+        //             title="Tweets"
+        //             styleName="inline"
+        //         />
+        //         <ListView
+        //             data={restaurants}
+        //             renderRow={this.renderRow}
+        //         />
+        //     </Screen>
+        // );
     }
 }
