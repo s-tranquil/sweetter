@@ -1,22 +1,25 @@
 import React, { Component } from 'react';
-import { Text, ScrollView, View, ListView, StyleSheet } from "react-native";
+import { Text, ListView, StyleSheet, ListViewDataSource, View } from "react-native";
 // import { Text, Screen, NavigationBar, ListView, View, ImageBackground, Divider, Tile, Title, Subtitle } from '@shoutem/ui';
 import request from "superagent";
 import { consumerKey, consumerSecretKey } from "./tokens";
 import { Base64 } from "js-base64";
 
-export default class App extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            data: [],
-            tweets: new ListView.DataSource({
-                rowHasChanged: (row1, row2) => row1 !== row2,
-            }),
-            lastId: undefined,
-            bearerToken: null
-            
-        };
+interface AppState {
+    data: any[],
+    tweets: ListViewDataSource,
+    lastId: string | undefined,
+    bearerToken: string | null
+}
+
+export default class App extends Component<{}, AppState> {
+    state = {
+        data: [],
+        tweets: new ListView.DataSource({
+            rowHasChanged: (row1, row2) => row1 !== row2,
+        }),
+        lastId: undefined,
+        bearerToken: null 
     }
 
     componentDidMount() {
@@ -30,7 +33,7 @@ export default class App extends Component {
             .set("Authorization", `Basic ${credentialsBase64}`)
             .set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
             .set("accept-encoding", "")
-            .end((err, res) => {
+            .end((_, res) => {
                 const accessToken = JSON.parse(res.text).access_token;
                 this.setState({bearerToken: accessToken}, () => this.getTweets());
             });
@@ -64,13 +67,13 @@ export default class App extends Component {
             });
     }
     
-    renderRow(tweet) { 
+    renderRow(tweet: any) { 
         return (
-            <React.Fragment>
+            <>
                 <Text style={{fontWeight: "bold"}}>{tweet.user && tweet.user.name}</Text>
                 <Text>{tweet.created_at}</Text>
                 <Text>{tweet.text}</Text>
-            </React.Fragment>
+            </>
         );
     }
 
