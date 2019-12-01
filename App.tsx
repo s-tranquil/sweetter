@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, ListView, StyleSheet, ListViewDataSource, View } from "react-native";
+import { Text, FlatList, StyleSheet, ListViewDataSource, View } from "react-native";
 // import { Text, Screen, NavigationBar, ListView, View, ImageBackground, Divider, Tile, Title, Subtitle } from '@shoutem/ui';
 import request from "superagent";
 import { consumerKey, consumerSecretKey } from "./tokens";
@@ -7,19 +7,17 @@ import { Base64 } from "js-base64";
 
 interface AppState {
     data: any[],
-    tweets: ListViewDataSource,
     lastId: string | undefined,
-    bearerToken: string | null
+    bearerToken: string | null,
+    text: string
 }
 
 export default class App extends Component<{}, AppState> {
     state = {
         data: [],
-        tweets: new ListView.DataSource({
-            rowHasChanged: (row1, row2) => row1 !== row2,
-        }),
         lastId: undefined,
-        bearerToken: null 
+        bearerToken: null,
+        text: ""
     }
 
     componentDidMount() {
@@ -55,36 +53,38 @@ export default class App extends Component<{}, AppState> {
             .set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
             .set("accept-encoding", "")
             .end((err, res) => {
+
                 const json = JSON.parse(res.xhr.response);
                 this.setState((prevState) => {
                     const data = [...prevState.data, ...json];
                     return {
                         data,
-                        tweets: prevState.tweets.cloneWithRows(data),
                         lastId: json[json.length - 1].id_str
                     };
                 });
             });
     }
-    
-    renderRow(tweet: any) { 
-        return (
-            <>
-                <Text style={{fontWeight: "bold"}}>{tweet.user && tweet.user.name}</Text>
-                <Text>{tweet.created_at}</Text>
-                <Text>{tweet.text}</Text>
-            </>
-        );
-    }
+
+    renderRow = ({ item: tweet }: { item: any }) => (
+        <>
+            <Text style={{fontWeight: "bold"}}>{tweet.user && tweet.user.name}</Text>
+            <Text>{tweet.created_at}</Text>
+            <Text>{tweet.text}</Text>
+        </>
+    );
+
+    keyExtractor = (_: any, index: number) => index.toString();
 
     render() {
-        const { tweets } = this.state;
+        const { data, text } = this.state;
 
         return(
             <View style={styles.container}>
-                <ListView
-                    dataSource={tweets}
-                    renderRow={this.renderRow}
+                <Text>{text}</Text>
+                <FlatList
+                    data={data}
+                    renderItem={this.renderRow}
+                    keyExtractor={this.keyExtractor}
                     onEndReached={this.getTweets}
                 />
             </View>
@@ -97,5 +97,6 @@ var styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#F5FCFF',
-    },  
+        marginTop: 30
+    },
 });
